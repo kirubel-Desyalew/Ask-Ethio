@@ -2,8 +2,11 @@ const express = require("express");
 const router = express.Router();
 
 router.get("/", (req, res) => {
-  console.log(req);
-  res.render("askquestion");
+  if (req.isAuthenticated()) {
+    res.render("askquestion");
+  } else {
+    res.redirect("/sign-in");
+  }
 });
 
 module.exports = router;

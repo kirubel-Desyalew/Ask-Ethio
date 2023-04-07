@@ -1,4 +1,5 @@
 const express = require("express");
+const passport = require("passport");
 const router = express.Router();
 const User = require("../models/user");
 
@@ -7,23 +8,23 @@ router.get("/", (req, res) => {
   res.render("signup");
 });
 
-router.post("", async (req, res) => {
-  try {
-    const newUser = new User({
-      email: req.body.email,
-      username: req.body.username,
-      password: req.body.password,
-    });
-
-    // Save the new user to the database
-    await newUser.save();
-
-    // Redirect the user to the login page
-    res.redirect("/sign-in");
-  } catch (error) {
-    console.log(error);
-    res.status(500).send("Internal Server Error");
-  }
+router.post("/", function (req, res) {
+  const password = req.body.password;
+  console.log(password);
+  User.register(
+    { username: req.body.username },
+    password,
+    function (err, user) {
+      if (err) {
+        console.log(err);
+        res.redirect("/sign-up");
+      } else {
+        passport.authenticate("local")(req, res, function () {
+          res.redirect("/askquestion");
+        });
+      }
+    }
+  );
 });
 
 module.exports = router;
