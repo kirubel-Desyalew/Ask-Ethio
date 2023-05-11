@@ -1,0 +1,233 @@
+<%- include('partials/header') %>
+
+<!-- Main Content -->
+<main class="container py-4">
+  <div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+      <% if (question.title) { %>
+      <h5 class="card-title"><%= question.title %></h5>
+      <% } %>
+    </div>
+
+    <div class="card-body">
+      <% if (question.description) { %>
+      <p class="card-text"><%= question.description %></p>
+      <% } %>
+    </div>
+
+    <% if (question.image) { %>
+    <img
+      src="<%= question.image %>"
+      class="card-img-top"
+      alt="Question Image"
+    />
+    <% } %>
+
+    <div class="card-footer d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <button
+          class="btn btn-success question-like-btn mr-2"
+          data-question-id="<%= question.id %>"
+          data-liked="<%= user && user.likedQuestions.includes(question.id) ? 'true' : 'false' %>"
+        >
+          <i class="fa fa-thumbs-up"></i> <%= question.likes.length %> <%= user
+          && user.likedQuestions.includes(question.id) ? 'Liked' : 'Like' %>
+        </button>
+        <button
+          class="btn btn-danger question-report-btn"
+          data-question-id="<%= question.id %>"
+          data-reported="<%= user && user.reportedQuestions.includes(question.id) ? 'true' : 'false' %>"
+        >
+          <i class="fa fa-flag"></i> <%= question.reports.length %> <%= user &&
+          user.reportedQuestions.includes(question.id) ? 'Reported' : 'Report'
+          %>
+        </button>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <h5>Answers</h5>
+      <% question.answers.forEach(function(answer) { %>
+      <div class="card mb-3">
+        <div class="card-body">
+          <p class="card-text"><%= answer.description %></p>
+        </div>
+
+        <% if (answer.image) { %>
+        <img
+          src="<%= answer.image %>"
+          class="card-img-top"
+          alt="Answer Image"
+        />
+        <% } %>
+
+        <div
+          class="card-footer d-flex justify-content-between align-items-center"
+        >
+          <div class="d-flex align-items-center">
+            <button
+              class="btn btn-success answer-like-btn mr-2"
+              data-question-id="<%= question.id %>"
+              data-answer-id="<%= answer.id %>"
+              data-liked="<%= user && user.likedAnswers.includes(answer.id) ? 'true' : 'false' %>"
+            >
+              <i class="fa fa-thumbs-up"></i> <%= answer.likes.length %> <%=
+              user && user.likedAnswers.includes(answer.id) ? 'Liked' : 'Like'
+              %>
+            </button>
+            <button
+              class="btn btn-danger answer-report-btn"
+              data-question-id="<%= question.id %>"
+              data-answer-id="<%= answer.id %>"
+              data-reported="<%= user && user.reportedAnswers.includes(answer.id) ? 'true' : 'false' %>"
+            >
+              <i class="fa fa-flag"></i> <%= answer.reports.length %> <%= user
+              && user.reportedAnswers.includes(answer.id) ? 'Reported' :
+              'Report' %>
+            </button>
+          </div>
+        </div>
+      </div>
+      <% }) %>
+
+      <form
+        action="/questions/<%= question.id %>/answers"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <div class="form-group">
+          <textarea
+            class="form-control mb-3"
+            name="description"
+            placeholder="Type your answer here"
+          ></textarea>
+          <label for="image">Attach an image (optional)</label>
+          <input
+            type="file"
+            id="image"
+            name="image"
+            class="form-control-file mb-3"
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+  </div>
+</main>
+<script>
+  // Handle question like button clicks
+  document.querySelectorAll(".question-like-btn").forEach((btn) => {
+    btn.addEventListener("click", async (event) => {
+      const questionId = event.target.dataset.questionId;
+      const isLiked = event.target.dataset.liked === "true";
+      const response = await fetch(`/lrquestions/${questionId}/like`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        event.target.textContent = `${data.liked ? "Liked" : "Like"} ${
+          data.likes
+        } Likes`;
+        event.target.dataset.liked = data.liked;
+      } else if (response.status === 401) {
+        window.location.href = "/signin";
+      } else {
+        // Handle other errors, e.g., show a message to the user
+      }
+    });
+  });
+
+  // Handle question report button clicks
+  document.querySelectorAll(".question-report-btn").forEach((btn) => {
+    btn.addEventListener("click", async (event) => {
+      const questionId = event.target.dataset.questionId;
+      const isReported = event.target.dataset.reported === "true";
+      const response = await fetch(`/lrquestions/${questionId}/report`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.removed) {
+          // Remove the question from the page, e.g., hide the question container
+        } else {
+          event.target.textContent = `${
+            data.reported ? "Reported" : "Report"
+          } ${data.reports} Reports`;
+          event.target.dataset.reported = data.reported;
+        }
+      } else {
+        // Handle error, e.g., show a message to the user
+      }
+    });
+  });
+
+  // Handle answer like button clicks
+  document.querySelectorAll(".answer-like-btn").forEach((btn) => {
+    btn.addEventListener("click", async (event) => {
+      const questionId = event.target.dataset.questionId;
+      const answerId = event.target.dataset.answerId;
+      const isLiked = event.target.dataset.liked === "true";
+      const response = await fetch(
+        `/lrquestions/${questionId}/answers/${answerId}/like`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        event.target.textContent = `${data.liked ? "Liked" : "Like"} ${
+          data.likes
+        } Likes`;
+        event.target.dataset.liked = data.liked;
+      } else {
+        // Handle error, e.g., show a message to the user
+      }
+    });
+  });
+
+  // Handle answer report button clicks
+  document.querySelectorAll(".answer-report-btn").forEach((btn) => {
+    btn.addEventListener("click", async (event) => {
+      const questionId = event.target.dataset.questionId;
+      const answerId = event.target.dataset.answerId;
+      const isReported = event.target.dataset.reported === "true";
+      const response = await fetch(
+        `/lrquestions/${questionId}/answers/${answerId}/report`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.removed) {
+          // Remove the answer from the page, e.g., hide the answer container
+        } else {
+          event.target.textContent = `${
+            data.reported ? "Reported" : "Report"
+          } ${data.reports} Reports`;
+          event.target.dataset.reported = data.reported;
+        }
+      } else {
+        // Handle error, e.g., show a message to the user
+      }
+    });
+  });
+</script>
+
+<%- include('partials/footer') %>

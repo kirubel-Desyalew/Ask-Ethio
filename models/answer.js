@@ -19,14 +19,10 @@ const answerSchema = new mongoose.Schema(
       ref: "Question",
       required: true,
     },
-    likesCount: {
-      type: Number,
-      default: 0,
-    },
-    reportsCount: {
-      type: Number,
-      default: 0,
-    },
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    reports: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] },
+    ],
   },
   { timestamps: true }
 );

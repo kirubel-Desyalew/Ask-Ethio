@@ -9,6 +9,12 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String },
   createdAt: { type: Date, default: Date.now },
   googleId: { type: String },
+  likedQuestions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Question" }],
+  likedAnswers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Answer" }],
+  reportedQuestions: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "Question" },
+  ],
+  reportedAnswers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Answer" }],
 });
 
 userSchema.plugin(passportLocalMongoose, { usernameUnique: false });

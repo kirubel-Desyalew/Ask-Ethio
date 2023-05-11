@@ -11,17 +11,6 @@ router.get("/", (req, res) => {
 });
 
 // Handle the login form submission
-router.get("/google", passport.authenticate("google", { scope: ["profile"] }));
-
-router.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/sign-in" }),
-  function (req, res) {
-    // Successful authentication, redirect to secrets page.
-    res.redirect("/askquestion");
-  }
-);
-
 router.post("/", (req, res) => {
   const user = new User({
     username: req.body.username,

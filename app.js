@@ -2,9 +2,11 @@ require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
+const path = require("path");
+const fs = require("fs");
 const mongoose = require("mongoose");
-const session = require("express-session");
 const passport = require("passport");
+const session = require("express-session");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
@@ -18,12 +20,15 @@ const questionRoutes = require("./routes/questions");
 const askQuestionRoutes = require("./routes/askquestion");
 const answerRoutes = require("./routes/answer");
 const indexRoutes = require("./routes/index");
+const searchRoutes = require("./routes/searchRoutes");
+const likeAndReportRoutes = require("./routes/likeandreport");
 
 const app = express();
 
 // Set the public folder as a static folder
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 // Set the view engine to EJS
 app.set("view engine", "ejs");
@@ -88,6 +93,8 @@ app.use("/sign-up", signUpRoutes);
 app.use("/sign-in", signInRoutes);
 app.use("/questions", questionRoutes);
 app.use("/askquestion", askQuestionRoutes);
+app.use("/api", searchRoutes);
+app.use("/lrquestions", likeAndReportRoutes);
 
 // Start the server
 app.listen(3000, function () {

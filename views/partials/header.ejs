@@ -68,14 +68,95 @@
         <p class="lead">Welcome to My Q&A Platform</p>
         <form class="d-flex">
           <input
+            id="search-input"
             class="form-control me-2"
             type="search"
             placeholder="Search"
             aria-label="Search"
           />
-          <button class="btn btn-outline-light" type="submit">Search</button>
+          <button class="btn btn-outline-light">Search</button>
         </form>
+        <div id="search-results-container" class="container"></div>
       </div>
+      <script>
+        const searchInput = document.getElementById("search-input");
+        let debounceTimeout;
+
+        searchInput.addEventListener("input", (event) => {
+          clearTimeout(debounceTimeout);
+          debounceTimeout = setTimeout(() => {
+            fetchSearchResults(event.target.value);
+          }, 300);
+        });
+
+        async function fetchSearchResults(query) {
+          if (!query) {
+            // Clear search results if the input is empty
+            return;
+          }
+
+          try {
+            const response = await fetch(
+              `/api/search?query=${encodeURIComponent(query)}`
+            );
+            const results = await response.json();
+            displaySearchResults(results);
+          } catch (error) {
+            console.error("Error fetching search results:", error);
+          }
+        }
+
+        function displaySearchResults(results) {
+          const searchResultsContainer = document.getElementById(
+            "search-results-container"
+          );
+          searchResultsContainer.innerHTML = "";
+
+          if (results.length === 0) {
+            searchResultsContainer.innerHTML = "<p>No results found.</p>";
+            return;
+          }
+
+          const row = document.createElement("div");
+          row.className = "row";
+          searchResultsContainer.appendChild(row);
+
+          results.forEach((question) => {
+            console.log(question);
+            const col = document.createElement("div");
+            col.className = "col-lg-6 col-md-6 col-sm-12";
+
+            const card = document.createElement("div");
+            card.className = "card mb-3 question-card";
+            card.dataset.questionId = question.id;
+
+            const cardHeader = document.createElement("div");
+            cardHeader.className = "card-header bg-primary text-white";
+            const cardTitle = document.createElement("h5");
+            cardTitle.className = "card-title";
+            cardTitle.textContent = question.title;
+            cardHeader.appendChild(cardTitle);
+
+            const cardBody = document.createElement("div");
+            cardBody.className = "card-body";
+            const cardText = document.createElement("p");
+            cardText.className = "card-text text-dark";
+            cardText.textContent = question.description;
+            cardBody.appendChild(cardText);
+
+            card.appendChild(cardHeader);
+            card.appendChild(cardBody);
+            col.appendChild(card);
+
+            const link = document.createElement("a");
+            link.href = `/questions/${question._id}`;
+            link.className = "stretched-link";
+            col.appendChild(link);
+
+            row.appendChild(col);
+          });
+        }
+      </script>
     </section>
   </body>
 </html>
