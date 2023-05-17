@@ -52,6 +52,11 @@ router.get("/:id", async (req, res) => {
     res.redirect("/questions");
   }
 });
+const FormData = require("form-data");
+const fs = require("fs");
+const axios = require("axios");
+const sightengineUser = process.env.SIGHTENGINE_API_USER;
+const sightengineSecret = process.env.SIGHTENGINE_API_SECRET;
 
 router.post("/:id/answers", upload.single("image"), async (req, res) => {
   if (!req.isAuthenticated()) {
@@ -71,6 +76,67 @@ router.post("/:id/answers", upload.single("image"), async (req, res) => {
     }
     const path = req.file ? "/images/answers/" + req.file.filename : "";
     console.log(path);
+
+    // Use Google Perspective API to detect inappropriate content in the text
+    const textToAnalyze = req.body.description;
+    const options = {
+      comment: { text: textToAnalyze },
+      languages: ["en"],
+      requestedAttributes: {
+        TOXICITY: {},
+        INSULT: {},
+        THREAT: {},
+        SEXUALLY_EXPLICIT: {},
+        FLIRTATION: {},
+      },
+    };
+    const perspectiveUrl = `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${process.env.GOOGLE_PERSPECTIVE_API_KEY}`;
+    const perspectiveResponse = await axios.post(
+      perspectiveUrl,
+      JSON.stringify(options),
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const perspectiveAttributes = perspectiveResponse.data.attributeScores;
+    // Check if either API detects inappropriate content
+    if (
+      Object.keys(perspectiveAttributes).some(
+        (key) => perspectiveAttributes[key].summaryScore.value > 0.5
+      )
+    ) {
+      console.log("Bad answer detected");
+      return res.redirect(`/questions/${questionId}?error=badanswer`);
+    }
+
+    // Use Sightengine API to detect inappropriate content in the image
+    if (req.file) {
+      const data = new FormData();
+      data.append("media", fs.createReadStream(req.file.path));
+      data.append(
+        "models",
+        "nudity-2.0,wad,offensive,text-content,gore,tobacco,gambling"
+      );
+      data.append("api_user", sightengineUser);
+      data.append("api_secret", sightengineSecret);
+      const sightengineResponse = await axios({
+        method: "post",
+        url: "https://api.sightengine.com/1.0/check.json",
+        data: data,
+        headers: data.getHeaders(),
+      });
+      const sightengineModels = sightengineResponse.data;
+      const badModels = Object.keys(sightengineModels).filter(
+        (key) => sightengineModels[key].prob > 0.5
+      );
+      if (badModels.length > 0) {
+        console.log("Bad image detected");
+        return res.redirect(`/questions/${questionId}?error=badanswer`);
+      }
+    }
+
     const answer = new Answer({
       description: req.body.description,
       author: req.user.id,

@@ -33,6 +33,12 @@ router.get("/", (req, res) => {
 
 // Save question
 // Set up post route
+
+const FormData = require("form-data");
+const fs = require("fs");
+const sightengineUser = process.env.SIGHTENGINE_API_USER;
+const sightengineSecret = process.env.SIGHTENGINE_API_SECRET;
+
 router.post("/", upload.single("image"), async (req, res) => {
   try {
     const { title, tags, description } = req.body;
@@ -82,6 +88,39 @@ router.post("/", upload.single("image"), async (req, res) => {
         error:
           "Your question appears to contain inappropriate content. Please try again with a different question.",
       });
+    }
+
+    // Use Sightengine API to detect inappropriate content in the image
+    if (req.file) {
+      const data = new FormData();
+      data.append("media", fs.createReadStream(req.file.path));
+      data.append(
+        "models",
+        "nudity-2.0,wad,offensive,text-content,gore,tobacco,gambling"
+      );
+      console.log(data);
+      console.log(sightengineUser);
+      console.log(sightengineSecret);
+      data.append("api_user", sightengineUser);
+      data.append("api_secret", sightengineSecret);
+      const sightengineResponse = await axios({
+        method: "post",
+        url: "https://api.sightengine.com/1.0/check.json",
+        data: data,
+        headers: data.getHeaders(),
+      });
+      const sightengineModels = sightengineResponse.data;
+      const badModels = Object.keys(sightengineModels).filter(
+        (key) => sightengineModels[key].prob > 0.5
+      );
+      if (badModels.length > 0) {
+        console.log("Bad image detected");
+        return res.render("askquestion", {
+          title: "Ask a question",
+          error:
+            "Your question image appears to contain inappropriate content. Please try again with a different image.",
+        });
+      }
     }
 
     question.save();
