@@ -3,6 +3,9 @@
 <!-- Main Content -->
 <main class="container py-4">
   <div class="card mb-3">
+    <% if (errorMessage) { %>
+    <div class="alert alert-danger" role="alert"><%= errorMessage %></div>
+    <% } %>
     <div class="card-header bg-primary text-white">
       <% if (question.title) { %>
       <h5 class="card-title"><%= question.title %></h5>
@@ -157,6 +160,7 @@
         const data = await response.json();
         if (data.removed) {
           // Remove the question from the page, e.g., hide the question container
+          window.location.href = "/questions";
         } else {
           event.target.textContent = `${
             data.reported ? "Reported" : "Report"

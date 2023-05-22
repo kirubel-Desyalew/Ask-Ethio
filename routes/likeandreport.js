@@ -95,6 +95,8 @@ router.post("/:questionId/report", async (req, res) => {
     if (question.reports.length > 2) {
       await Question.deleteOne({ _id: question._id });
       return res.json({ removed: true });
+
+      // Redirect to the questions page
     } else {
       // Return the updated question with the new report count
       res.json({ reports: question.reports.length });

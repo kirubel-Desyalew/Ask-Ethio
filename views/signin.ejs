@@ -21,6 +21,9 @@
             <div class="panel-heading">
               <h3 class="pt-3 font-weight-bold">Sign In</h3>
             </div>
+            <% if (error) { %>
+            <div class="alert alert-danger" role="alert"><%= error %></div>
+            <% } %>
             <div class="panel-body p-3">
               <form action="/sign-in" method="POST">
                 <div class="form-group py-2">
@@ -28,7 +31,7 @@
                     <span class="far fa-user p-2"></span>
                     <input
                       type="email"
-                      placeholder="username"
+                      placeholder="email"
                       name="username"
                       required
                     />

@@ -23,7 +23,9 @@ const upload = multer({ storage: storage });
 
 router.get("/", async (req, res) => {
   try {
-    const questions = await Question.find().populate("answers");
+    const questions = await Question.find()
+      .sort({ createdAt: -1 }) // Sort by createdAt field in descending order (latest first)
+      .populate("answers");
     res.render("questions", { questions });
   } catch (err) {
     console.error(err);
@@ -35,6 +37,20 @@ router.get("/:id", async (req, res) => {
   try {
     const question = await Question.findById(req.params.id).populate("answers");
     const user = req.user;
+    const error = req.query.error;
+
+    // Update the error messages based on the error query parameter
+    let errorMessage = "";
+    if (error === "image") {
+      errorMessage =
+        "Your answer contains inappropriate image content. Please try again with a different answer.";
+    } else if (error === "text") {
+      errorMessage =
+        "Your answer contains inappropriate text content. Please try again with a different answer.";
+    } else if (error === "badanswer") {
+      errorMessage =
+        "Your answer appears to contain inappropriate content. Please try again with a different answer.";
+    }
     if (
       user &&
       !user.likedQuestions &&
@@ -47,7 +63,7 @@ router.get("/:id", async (req, res) => {
       user.likedAnswers = [];
       user.reportedAnswers = [];
     }
-    res.render("specificquestions", { question: question, user });
+    res.render("specificquestions", { question: question, user, errorMessage });
   } catch {
     res.redirect("/questions");
   }
@@ -108,7 +124,7 @@ router.post("/:id/answers", upload.single("image"), async (req, res) => {
       )
     ) {
       console.log("Bad answer detected");
-      return res.redirect(`/questions/${questionId}?error=badanswer`);
+      return res.redirect(`/questions/${questionId}?error=text`);
     }
 
     // Use Sightengine API to detect inappropriate content in the image
@@ -133,7 +149,7 @@ router.post("/:id/answers", upload.single("image"), async (req, res) => {
       );
       if (badModels.length > 0) {
         console.log("Bad image detected");
-        return res.redirect(`/questions/${questionId}?error=badanswer`);
+        return res.redirect(`/questions/${questionId}?error=image`);
       }
     }
 

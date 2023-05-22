@@ -7,11 +7,11 @@ const User = require("../models/user");
 
 // Render the login form
 router.get("/", (req, res) => {
-  res.render("signin");
+  res.render("signin", { error: null });
 });
 
 // Handle the login form submission
-router.post("/", (req, res) => {
+router.post("/", (req, res, next) => {
   const user = new User({
     username: req.body.username,
     password: req.body.password,
@@ -21,9 +21,26 @@ router.post("/", (req, res) => {
       console.log(err);
       res.redirect("/sign-in");
     } else {
-      passport.authenticate("local")(req, res, function () {
-        res.redirect("/askquestion");
-      });
+      passport.authenticate("local", function (err, user, info) {
+        if (err) {
+          console.log(err);
+          res.redirect("/sign-in");
+        } else if (!user) {
+          // Add error message for failed authentication
+          return res.render("signin", {
+            error: "Invalid email or password. Please try again.",
+          });
+        } else {
+          req.logIn(user, function (err) {
+            if (err) {
+              console.log(err);
+              res.redirect("/sign-in");
+            } else {
+              res.redirect("/askquestion");
+            }
+          });
+        }
+      })(req, res, next); // Pass 'next' as an argument to the passport.authenticate middleware
     }
   });
 });

@@ -5,7 +5,7 @@
   <div class="jumbotron">
     <div class="container">
       <div class="text-center">
-        <h1 class="display-4">Welcome to our Q&amp;A platform</h1>
+        <h1 class="display-4">Welcome to Ask Ethio platform</h1>
         <p class="lead">
           Ask questions or browse for answers to find solutions to your
           problems.
@@ -16,7 +16,9 @@
           <div class="card text-center">
             <div class="card-body">
               <h5 class="card-title">Active Users</h5>
-              <p class="card-text display-4 font-weight-bold">12,345</p>
+              <p class="card-text display-4 font-weight-bold">
+                <%= userCount %>
+              </p>
             </div>
           </div>
         </div>
@@ -24,7 +26,9 @@
           <div class="card text-center">
             <div class="card-body">
               <h5 class="card-title">Questions Asked</h5>
-              <p class="card-text display-4 font-weight-bold">123,456</p>
+              <p class="card-text display-4 font-weight-bold">
+                <%= questionCount %>
+              </p>
             </div>
           </div>
         </div>
@@ -38,7 +42,7 @@
                 Get quick answers to your questions from our community of
                 experts.
               </p>
-              <a href="#" class="btn btn-primary">Ask Now</a>
+              <a href="/askquestion" class="btn btn-primary">Ask Now</a>
             </div>
           </div>
         </div>
@@ -49,7 +53,7 @@
               <p class="card-text">
                 Explore our database of questions and find the answers you need.
               </p>
-              <a href="#" class="btn btn-primary">Browse Now</a>
+              <a href="/questions" class="btn btn-primary">Browse Now</a>
             </div>
           </div>
         </div>
